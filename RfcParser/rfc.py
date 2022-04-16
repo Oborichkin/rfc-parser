@@ -3,6 +3,8 @@ import logging
 
 from typing import List
 
+from .chapter import Chapter
+
 logger = logging.getLogger(__name__)
 
 
@@ -12,7 +14,7 @@ class RFC:
 
     def __init__(self, text: str):
         self._raw = text
-        self._title = None
+        self.title = None
         self._chapters = []
 
         self.pages: List[str] = None
@@ -37,7 +39,7 @@ class RFC:
             if not first_page:
                 lines = page.splitlines()[2:-1]     # Skip insignificant lines
             else:
-                self._title = page.splitlines()[0].strip()
+                self.title = page.splitlines()[0].strip()
                 lines = page.splitlines()[1:-1]
                 first_page = False
             for i, line in enumerate(lines):
@@ -85,11 +87,8 @@ class RFC:
                 line_was_empty = line == ""
 
     @property
-    def title(self) -> str:
-        return self._title
-
-
-class Chapter:
-    def __init__(self):
-        self.title = None
-        self.paragraphs = []
+    def chapters(self) -> List[Chapter]:
+        return [
+            Chapter(title=ch["name"], paragraphs=ch["paragraphs"])
+            for ch in self._chapters
+        ]
