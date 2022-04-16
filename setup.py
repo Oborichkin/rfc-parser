@@ -1,12 +1,12 @@
 import setuptools
 
 setuptools.setup(
-    name="template",
+    name="RfcParser",
     packages=setuptools.find_packages(),
     version="0.1.0",
-    description="Python project template",
+    description="RFC Parser written in python",
     author="Pavel Oborin",
     author_email="oborin.p@gmail.com",
-    url="https://github.com/Oborichkin/python-template",
+    url="https://github.com/Oborichkin/rfc-parser",
     python_requires=">=3.6",
 )
