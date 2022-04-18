@@ -1,19 +1,20 @@
 import pytest
+from RfcParser import RFC
 
 
 @pytest.fixture
-def rfc3261():
+def rfc3261() -> RFC:
     with open("data/rfc3261.txt") as f:
-        return f.read()
+        return RFC(f.read())
 
 
 @pytest.fixture
-def rfc2119():
+def rfc2119() -> RFC:
     with open("data/rfc2119.txt") as f:
-        return f.read()
+        return RFC(f.read())
 
 
 @pytest.fixture
-def rfc2327():
+def rfc2327() -> RFC:
     with open("data/rfc2327.txt") as f:
-        return f.read()
+        return RFC(f.read())

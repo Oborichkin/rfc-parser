@@ -12,6 +12,9 @@ hooks: venv
 
 examples: data/rfc3261.txt data/rfc2119.txt data/rfc2327.txt
 
+rfc-shell: venv examples
+	PYTHONSTARTUP=tests/shell.py  $(VENV)/python
+
 data/rfc3261.txt:
 	curl \
 		-o rfc3261.txt.fetched \
