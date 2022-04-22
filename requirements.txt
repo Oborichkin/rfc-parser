@@ -1,6 +1,7 @@
 # Tests
 pytest
 pytest-cov
+ipykernel
 # Linting & Formatting
 flake8
 black

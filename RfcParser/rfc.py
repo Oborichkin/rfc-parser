@@ -6,22 +6,29 @@ from typing import List
 logger = logging.getLogger(__name__)
 
 
+class Section:
+    def __init__(self, lines: List[str]):
+        self.raw_lines = lines
+        joined_lines = " ".join([line.strip() for line in lines])
+        self.k = len(re.findall(r"[ \.\-\|:\\\/]", joined_lines)) / len(joined_lines)
+        if self.k >= 0.25:  # TODO Need more complex determination of figures, schemes, tables etc.
+            self.text = "\n".join(lines)
+        else:
+            self.text = joined_lines
+
+
 class Chapter:
-    def __init__(self, title, raw_sections):
+    def __init__(self, title, raw_sections: List[List[str]]):
         self._orig = raw_sections
         self.title = title
-        self.paragraphs = []
-        for section in raw_sections:
-            self.paragraphs.append(
-                " ".join([line.strip() for line in section])
-            )
+        self.sections: List[Section] = [Section(sec) for sec in raw_sections]
 
     @property
     def text(self):
-        return "\n".join(self.paragraphs)
+        return "\n\n".join([sec.text for sec in self.sections])
 
     def __len__(self):
-        return len(self.paragraphs)
+        return len(self.sections)
 
 
 class RFC:
@@ -33,13 +40,19 @@ class RFC:
         self.title = None
         self._sections = []
 
-        self.pages: List[str] = None
+        self._pages: List[str] = None
 
         self._parse_rfc(text)
 
     @property
     def text(self):
-        return "\n".join([ch.text for ch in self.chapters])
+        return "\n\n".join([ch.text for ch in self.chapters])
+
+    def to_md(self, filename):
+        with open(filename, "w+") as f:
+            for ch in self.chapters:
+                f.write(f"# {ch.title}\n\n")
+                f.write(f"{ch.text}\n\n")
 
     def _parse_metadata(self, text):
         for match in re.finditer(r"\n\n^ +", text, re.MULTILINE):
@@ -49,12 +62,12 @@ class RFC:
 
     def _parse_rfc(self, text):
         text = self._parse_metadata(text)
-        self.pages = text.split(self.PAGE_SEPARATOR)
+        self._pages = text.split(self.PAGE_SEPARATOR)
 
         first_page = True
         line_was_empty = True
 
-        for page in self.pages:
+        for page in self._pages:
             first_line = True
             if not first_page:
                 lines = page.splitlines()[2:-1]     # Skip insignificant lines
