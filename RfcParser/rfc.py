@@ -13,8 +13,17 @@ class Section:
         self.k = len(re.findall(r"[ \.\-\|:\\\/]", joined_lines)) / len(joined_lines)
         if self.k >= 0.25:  # TODO Need more complex determination of figures, schemes, tables etc.
             self.text = "\n".join(lines)
+            self.type = "preformatted"
         else:
             self.text = joined_lines
+            self.type = "text"
+
+    @property
+    def json(self):
+        return {
+            "type": self.type,
+            "text": self.text
+        }
 
 
 class Chapter:
@@ -26,6 +35,13 @@ class Chapter:
     @property
     def text(self):
         return "\n\n".join([sec.text for sec in self.sections])
+
+    @property
+    def json(self):
+        return {
+            "title": self.title,
+            "sections": [section.json for section in self.sections]
+        }
 
     def __len__(self):
         return len(self.sections)
@@ -43,6 +59,13 @@ class RFC:
         self._pages: List[str] = None
 
         self._parse_rfc(text)
+
+    @property
+    def json(self):
+        return {
+            "title": self.title,
+            "chapters": [ch.json for ch in self.chapters]
+        }
 
     @property
     def text(self):
