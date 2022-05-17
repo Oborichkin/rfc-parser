@@ -1,14 +1,20 @@
 import re
 import logging
 
-from typing import List
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class Section:
-    def __init__(self, lines: List[str]):
-        self.raw_lines = lines
+    def __init__(self, lines: Optional[List[str]] = None):
+        self.type = None
+        self.text = None
+
+        if lines:
+            self.parse_lines(lines)
+
+    def parse_lines(self, lines):
         joined_lines = " ".join([line.strip() for line in lines])
         self.k = len(re.findall(r"[ \.\-\|:\\\/]", joined_lines)) / len(joined_lines)
         if self.k >= 0.25:  # TODO Need more complex determination of figures, schemes, tables etc.
@@ -25,12 +31,18 @@ class Section:
             "text": self.text
         }
 
+    @staticmethod
+    def from_json(obj) -> "Section":
+        section = Section()
+        section.text = obj.get("text")
+        section.type = obj.get("type")
+        return section
+
 
 class Chapter:
-    def __init__(self, title, raw_sections: List[List[str]]):
-        self._orig = raw_sections
+    def __init__(self, title: Optional[str] = None, raw_sections: Optional[List[List[str]]] = None):
         self.title = title
-        self.sections: List[Section] = [Section(sec) for sec in raw_sections]
+        self.sections: List[Section] = [Section(sec) for sec in raw_sections] if raw_sections else []
 
     @property
     def text(self):
@@ -43,6 +55,13 @@ class Chapter:
             "sections": [section.json for section in self.sections]
         }
 
+    @staticmethod
+    def from_json(obj) -> "Chapter":
+        ch = Chapter()
+        ch.title = obj.get("title")
+        ch.sections = [Section.from_json(sec) for sec in obj.get("sections")]
+        return ch
+
     def __len__(self):
         return len(self.sections)
 
@@ -51,14 +70,14 @@ class RFC:
 
     PAGE_SEPARATOR = "\u000c"
 
-    def __init__(self, text: str):
-        self._raw = text
+    def __init__(self, text: Optional[str] = None):
         self.title = None
         self._sections = []
-
+        self._chapters = []
         self._pages: List[str] = None
 
-        self._parse_rfc(text)
+        if text:
+            self._parse_rfc(text)
 
     @property
     def json(self):
@@ -66,6 +85,13 @@ class RFC:
             "title": self.title,
             "chapters": [ch.json for ch in self.chapters]
         }
+
+    @staticmethod
+    def from_json(obj) -> "RFC":
+        rfc = RFC()
+        rfc.title = obj.get("title")
+        rfc._chapters = [Chapter.from_json(ch) for ch in obj.get("chapters", [])]
+        return rfc
 
     @property
     def text(self):
@@ -144,10 +170,12 @@ class RFC:
 
     @property
     def chapters(self) -> List[Chapter]:
-        return [
-            Chapter(
-                title=sec["name"],
-                raw_sections=sec["paragraphs"]
-            )
-            for sec in self._sections
-        ]
+        if not self._chapters:
+            self._chapters = [
+                Chapter(
+                    title=sec["name"],
+                    raw_sections=sec["paragraphs"]
+                )
+                for sec in self._sections
+            ]
+        return self._chapters
