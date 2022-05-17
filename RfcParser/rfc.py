@@ -34,7 +34,7 @@ class Chapter:
 
     @property
     def text(self):
-        return "\n\n".join([sec.text for sec in self.sections])
+        return "\n\n".join([sec.text for sec in self.sections if sec.type == "text"])
 
     @property
     def json(self):
